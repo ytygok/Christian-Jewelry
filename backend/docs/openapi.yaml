@@ -1,0 +1,2209 @@
+openapi: 3.0.3
+
+info:
+  title: Christian Jewelry API
+  description: |
+    REST API для інтернет-магазину християнських прикрас.
+
+    ## Аутентифікація
+    Використовується **Bearer JWT** токен. Для захищених ендпоінтів передавайте:
+    ```
+    Authorization: Bearer <your_token>
+    ```
+
+    ## Ролі
+    - `customer` — зареєстрований покупець
+    - `admin` — адміністратор магазину
+  version: 1.0.0
+  contact:
+    name: Christian Jewelry Team
+    email: admin@christian-jewelry.ua
+
+servers:
+  - url: http://localhost:3000/api/v1
+    description: Локальна розробка
+  - url: https://api.christian-jewelry.ua/v1
+    description: Продакшн
+
+tags:
+  - name: Auth
+    description: Реєстрація та авторизація
+  - name: Categories
+    description: Категорії виробів
+  - name: Products
+    description: Каталог продуктів
+  - name: Materials
+    description: Матеріали виробів
+  - name: Symbols
+    description: Символи та теми
+  - name: Cart
+    description: Кошик покупця
+  - name: Orders
+    description: Замовлення
+  - name: Custom Requests
+    description: Індивідуальні замовлення
+  - name: Promo Codes
+    description: Промокоди (admin)
+  - name: Reviews
+    description: Відгуки покупців
+  - name: Users
+    description: Профіль та адреси
+  - name: Admin
+    description: Адміністративні ендпоінти
+
+paths:
+
+  # AUTH
+  /auth/register:
+    post:
+      tags: [Auth]
+      summary: Реєстрація нового користувача
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterRequest'
+            example:
+              email: user@example.com
+              password: StrongPass123!
+              full_name: Іван Петренко
+              phone: "+380501234567"
+      responses:
+        '201':
+          description: Успішна реєстрація
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '409':
+          $ref: '#/components/responses/Conflict'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /auth/login:
+    post:
+      tags: [Auth]
+      summary: Вхід у систему
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            example:
+              email: user@example.com
+              password: StrongPass123!
+      responses:
+        '200':
+          description: Успішний вхід
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+  /auth/logout:
+    post:
+      tags: [Auth]
+      summary: Вихід із системи
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Успішний вихід
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MessageResponse'
+
+  /auth/refresh:
+    post:
+      tags: [Auth]
+      summary: Оновлення access токену
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [refresh_token]
+              properties:
+                refresh_token:
+                  type: string
+      responses:
+        '200':
+          description: Новий access токен
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+
+  # CATEGORIES
+  /categories:
+    get:
+      tags: [Categories]
+      summary: Список усіх категорій
+      parameters:
+        - in: query
+          name: active_only
+          schema:
+            type: boolean
+            default: true
+          description: Тільки активні категорії
+      responses:
+        '200':
+          description: Список категорій
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Category'
+
+    post:
+      tags: [Categories]
+      summary: Створити категорію (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        '201':
+          description: Категорію створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /categories/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    get:
+      tags: [Categories]
+      summary: Отримати категорію по ID
+      responses:
+        '200':
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+          description: Категорія
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Categories]
+      summary: Оновити категорію (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CategoryCreate'
+      responses:
+        '200':
+          description: Оновлена категорія
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Category'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Categories]
+      summary: Видалити категорію (admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Видалено
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  # PRODUCTS
+  /products:
+    get:
+      tags: [Products]
+      summary: Каталог продуктів з фільтрацією
+      parameters:
+        - in: query
+          name: category_id
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: category_slug
+          schema:
+            type: string
+          example: pendants
+        - in: query
+          name: material_id
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: symbol_id
+          schema:
+            type: string
+            format: uuid
+        - in: query
+          name: min_price
+          schema:
+            type: number
+        - in: query
+          name: max_price
+          schema:
+            type: number
+        - in: query
+          name: is_featured
+          schema:
+            type: boolean
+        - in: query
+          name: is_custom
+          schema:
+            type: boolean
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Пошук по назві (pg_trgm)
+        - in: query
+          name: sort
+          schema:
+            type: string
+            enum: [price_asc, price_desc, newest, popular]
+          default: newest
+        - in: query
+          name: page
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 20
+      responses:
+        '200':
+          description: Список продуктів з пагінацією
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductListResponse'
+
+    post:
+      tags: [Products]
+      summary: Створити продукт (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '201':
+          description: Продукт створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /products/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    get:
+      tags: [Products]
+      summary: Деталі продукту
+      responses:
+        '200':
+          description: Продукт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    patch:
+      tags: [Products]
+      summary: Оновити продукт (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductCreate'
+      responses:
+        '200':
+          description: Оновлений продукт
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductDetail'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+    delete:
+      tags: [Products]
+      summary: Видалити продукт (admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Видалено
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /products/{id}/images:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    get:
+      tags: [Products]
+      summary: Галерея зображень продукту
+      responses:
+        '200':
+          description: Список зображень
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductImage'
+    post:
+      tags: [Products]
+      summary: Додати зображення (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductImageCreate'
+      responses:
+        '201':
+          description: Зображення додано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductImage'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /products/{id}/variants:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    get:
+      tags: [Products]
+      summary: Варіанти продукту (розміри, довжини)
+      responses:
+        '200':
+          description: Список варіантів
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ProductVariant'
+    post:
+      tags: [Products]
+      summary: Додати варіант (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ProductVariantCreate'
+      responses:
+        '201':
+          description: Варіант створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ProductVariant'
+
+  /products/{id}/reviews:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    get:
+      tags: [Reviews]
+      summary: Відгуки на продукт
+      parameters:
+        - in: query
+          name: approved_only
+          schema:
+            type: boolean
+            default: true
+      responses:
+        '200':
+          description: Список відгуків
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+    post:
+      tags: [Reviews]
+      summary: Залишити відгук
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewCreate'
+      responses:
+        '201':
+          description: Відгук відправлено на модерацію
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+
+  # MATERIALS
+  /materials:
+    get:
+      tags: [Materials]
+      summary: Список матеріалів
+      responses:
+        '200':
+          description: Матеріали
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Material'
+    post:
+      tags: [Materials]
+      summary: Створити матеріал (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialCreate'
+      responses:
+        '201':
+          description: Матеріал створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Material'
+
+  /materials/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    patch:
+      tags: [Materials]
+      summary: Оновити матеріал (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/MaterialCreate'
+      responses:
+        '200':
+          description: Оновлений матеріал
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Material'
+    delete:
+      tags: [Materials]
+      summary: Видалити матеріал (admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Видалено
+
+
+  # SYMBOLS
+  /symbols:
+    get:
+      tags: [Symbols]
+      summary: Список символів
+      responses:
+        '200':
+          description: Символи
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Symbol'
+    post:
+      tags: [Symbols]
+      summary: Створити символ (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SymbolCreate'
+      responses:
+        '201':
+          description: Символ створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Symbol'
+
+  /symbols/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    patch:
+      tags: [Symbols]
+      summary: Оновити символ (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SymbolCreate'
+      responses:
+        '200':
+          description: Оновлений символ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Symbol'
+    delete:
+      tags: [Symbols]
+      summary: Видалити символ (admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Видалено
+
+
+  # CART
+  /cart:
+    get:
+      tags: [Cart]
+      summary: Отримати вміст кошика
+      security:
+        - BearerAuth: []
+        - SessionAuth: []
+      responses:
+        '200':
+          description: Кошик
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartResponse'
+    delete:
+      tags: [Cart]
+      summary: Очистити кошик
+      security:
+        - BearerAuth: []
+        - SessionAuth: []
+      responses:
+        '204':
+          description: Кошик очищено
+
+  /cart/items:
+    post:
+      tags: [Cart]
+      summary: Додати товар до кошика
+      security:
+        - BearerAuth: []
+        - SessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CartItemCreate'
+      responses:
+        '201':
+          description: Товар додано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItem'
+        '400':
+          description: Недостатньо товару на складі
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /cart/items/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    patch:
+      tags: [Cart]
+      summary: Змінити кількість товару
+      security:
+        - BearerAuth: []
+        - SessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [quantity]
+              properties:
+                quantity:
+                  type: integer
+                  minimum: 1
+      responses:
+        '200':
+          description: Оновлена позиція
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CartItem'
+    delete:
+      tags: [Cart]
+      summary: Видалити позицію з кошика
+      security:
+        - BearerAuth: []
+        - SessionAuth: []
+      responses:
+        '204':
+          description: Видалено
+
+
+  # ORDERS
+  /orders:
+    get:
+      tags: [Orders]
+      summary: Мої замовлення
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [new, confirmed, in_production, shipped, delivered, cancelled]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 10
+      responses:
+        '200':
+          description: Список замовлень
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+
+    post:
+      tags: [Orders]
+      summary: Оформити замовлення
+      security:
+        - BearerAuth: []
+        - SessionAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OrderCreate'
+            example:
+              customer_name: Іван Петренко
+              customer_phone: "+380501234567"
+              customer_email: ivan@example.com
+              delivery_method: nova_poshta
+              delivery_city: Київ
+              nova_poshta_ref: "5"
+              payment_method: card
+              promo_code: CHRISTMAS10
+              notes: Подарункова упаковка, будь ласка
+              items:
+                - product_id: 550e8400-e29b-41d4-a716-446655440000
+                  variant_id: null
+                  quantity: 1
+      responses:
+        '201':
+          description: Замовлення оформлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '400':
+          description: Помилка (наприклад, товар відсутній)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          $ref: '#/components/responses/ValidationError'
+
+  /orders/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    get:
+      tags: [Orders]
+      summary: Деталі замовлення
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Замовлення
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+        '404':
+          $ref: '#/components/responses/NotFound'
+
+  /orders/{id}/cancel:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    post:
+      tags: [Orders]
+      summary: Скасувати замовлення
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Замовлення скасовано
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '400':
+          description: Неможливо скасувати (наприклад, вже відправлено)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /orders/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    patch:
+      tags: [Admin]
+      summary: Змінити статус замовлення (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [new, confirmed, in_production, shipped, delivered, cancelled]
+                admin_notes:
+                  type: string
+                nova_poshta_ref:
+                  type: string
+                  description: ТТН (для статусу shipped)
+      responses:
+        '200':
+          description: Статус змінено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderDetail'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  # CUSTOM REQUESTS
+  /custom-requests:
+    get:
+      tags: [Custom Requests]
+      summary: Мої індивідуальні запити
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Список запитів
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/CustomRequest'
+
+    post:
+      tags: [Custom Requests]
+      summary: Подати запит на індивідуальний виріб
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CustomRequestCreate'
+            example:
+              customer_name: Марія Коваль
+              customer_phone: "+380671234567"
+              customer_email: maria@example.com
+              description: Хочу кільце з хрестом та ім'ям "Михайло" гравіруванням
+              budget: 2500
+              reference_urls:
+                - https://pinterest.com/example-ring
+      responses:
+        '201':
+          description: Запит прийнято
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomRequest'
+
+  /custom-requests/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    get:
+      tags: [Custom Requests]
+      summary: Деталі запиту
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Запит
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomRequest'
+
+  /custom-requests/{id}/status:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    patch:
+      tags: [Admin]
+      summary: Оновити статус запиту (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status]
+              properties:
+                status:
+                  type: string
+                  enum: [new, in_review, quoted, approved, rejected]
+                admin_notes:
+                  type: string
+      responses:
+        '200':
+          description: Статус оновлено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomRequest'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+
+  # PROMO CODES
+  /promo-codes/validate:
+    post:
+      tags: [Promo Codes]
+      summary: Перевірити промокод
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code, order_amount]
+              properties:
+                code:
+                  type: string
+                  example: CHRISTMAS10
+                order_amount:
+                  type: number
+                  example: 1500
+      responses:
+        '200':
+          description: Промокод валідний
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromoCodeValidation'
+        '400':
+          description: Промокод недійсний
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /promo-codes:
+    get:
+      tags: [Admin]
+      summary: Список промокодів (admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Промокоди
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/PromoCode'
+    post:
+      tags: [Admin]
+      summary: Створити промокод (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromoCodeCreate'
+      responses:
+        '201':
+          description: Промокод створено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromoCode'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /promo-codes/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    patch:
+      tags: [Admin]
+      summary: Оновити промокод (admin)
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PromoCodeCreate'
+      responses:
+        '200':
+          description: Оновлений промокод
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PromoCode'
+    delete:
+      tags: [Admin]
+      summary: Видалити промокод (admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Видалено
+
+
+  # REVIEWS (moderation)
+  /reviews:
+    get:
+      tags: [Admin]
+      summary: Всі відгуки на модерацію (admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: approved
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Відгуки
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Review'
+
+  /reviews/{id}/approve:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    post:
+      tags: [Admin]
+      summary: Схвалити відгук (admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Відгук схвалено
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Review'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /reviews/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    delete:
+      tags: [Admin]
+      summary: Видалити відгук (admin)
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Видалено
+
+
+  # USERS (profile)
+  /users/me:
+    get:
+      tags: [Users]
+      summary: Мій профіль
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Профіль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+        '401':
+          $ref: '#/components/responses/Unauthorized'
+    patch:
+      tags: [Users]
+      summary: Оновити профіль
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserProfileUpdate'
+      responses:
+        '200':
+          description: Оновлений профіль
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserProfile'
+
+  /users/me/addresses:
+    get:
+      tags: [Users]
+      summary: Мої адреси доставки
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Адреси
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/UserAddress'
+    post:
+      tags: [Users]
+      summary: Додати адресу
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAddressCreate'
+      responses:
+        '201':
+          description: Адреса додана
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddress'
+
+  /users/me/addresses/{id}:
+    parameters:
+      - $ref: '#/components/parameters/UUIDParam'
+    patch:
+      tags: [Users]
+      summary: Оновити адресу
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserAddressCreate'
+      responses:
+        '200':
+          description: Оновлена адреса
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserAddress'
+    delete:
+      tags: [Users]
+      summary: Видалити адресу
+      security:
+        - BearerAuth: []
+      responses:
+        '204':
+          description: Видалено
+
+
+  # ADMIN — загальна статистика
+  /admin/stats:
+    get:
+      tags: [Admin]
+      summary: Статистика магазину
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Дашборд статистика
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AdminStats'
+        '403':
+          $ref: '#/components/responses/Forbidden'
+
+  /admin/users:
+    get:
+      tags: [Admin]
+      summary: Список користувачів (admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: role
+          schema:
+            type: string
+            enum: [customer, admin]
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Користувачі
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserListResponse'
+
+  /admin/orders:
+    get:
+      tags: [Admin]
+      summary: Всі замовлення (admin)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          schema:
+            type: string
+            enum: [new, confirmed, in_production, shipped, delivered, cancelled]
+        - in: query
+          name: from_date
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: to_date
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 20
+      responses:
+        '200':
+          description: Замовлення
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrderListResponse'
+
+# COMPONENTS
+components:
+
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+    SessionAuth:
+      type: apiKey
+      in: header
+      name: X-Session-ID
+      description: Для гостей без авторизації (кошик)
+
+  parameters:
+    UUIDParam:
+      name: id
+      in: path
+      required: true
+      schema:
+        type: string
+        format: uuid
+
+  responses:
+    Unauthorized:
+      description: Не авторизовано
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Unauthorized
+            message: Необхідна авторизація
+    Forbidden:
+      description: Доступ заборонено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Forbidden
+            message: Недостатньо прав
+    NotFound:
+      description: Не знайдено
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          example:
+            error: Not Found
+            message: Ресурс не знайдено
+    Conflict:
+      description: Конфлікт (наприклад, email вже існує)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ValidationError:
+      description: Помилка валідації
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ValidationErrorBody'
+
+  schemas:
+
+    # ── Base ──
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+        message:
+          type: string
+
+    ValidationErrorBody:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Validation Error
+        fields:
+          type: object
+          additionalProperties:
+            type: string
+          example:
+            email: Невірний формат email
+            price: Ціна не може бути від'ємною
+
+    MessageResponse:
+      type: object
+      properties:
+        message:
+          type: string
+
+    Pagination:
+      type: object
+      properties:
+        total:
+          type: integer
+        page:
+          type: integer
+        limit:
+          type: integer
+        total_pages:
+          type: integer
+
+    # ── Auth ──
+    RegisterRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+          minLength: 8
+        full_name:
+          type: string
+        phone:
+          type: string
+
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+        password:
+          type: string
+
+    AuthResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        refresh_token:
+          type: string
+        expires_in:
+          type: integer
+          description: Секунди до закінчення access токену
+        user:
+          $ref: '#/components/schemas/UserProfile'
+
+    # ── Category ──
+    Category:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Підвіски
+        slug:
+          type: string
+          example: pendants
+        icon_url:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    CategoryCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        icon_url:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+        is_active:
+          type: boolean
+
+    # ── Material ──
+    Material:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Срібло 925
+        code:
+          type: string
+          example: AG925
+        description:
+          type: string
+          nullable: true
+
+    MaterialCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        code:
+          type: string
+        description:
+          type: string
+
+    # ── Symbol ──
+    Symbol:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Хрест
+        slug:
+          type: string
+          example: cross
+        description:
+          type: string
+          nullable: true
+
+    SymbolCreate:
+      type: object
+      required: [name, slug]
+      properties:
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+
+    # ── Product ───
+    ProductImage:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        url:
+          type: string
+        alt_text:
+          type: string
+          nullable: true
+        sort_order:
+          type: integer
+        is_cover:
+          type: boolean
+
+    ProductImageCreate:
+      type: object
+      required: [url]
+      properties:
+        url:
+          type: string
+        alt_text:
+          type: string
+        sort_order:
+          type: integer
+        is_cover:
+          type: boolean
+
+    ProductVariant:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Розмір 17
+        price_modifier:
+          type: number
+          example: 50
+        stock_qty:
+          type: integer
+
+    ProductVariantCreate:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        price_modifier:
+          type: number
+          default: 0
+        stock_qty:
+          type: integer
+          default: 0
+
+    ProductSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Підвіска Хрест
+        slug:
+          type: string
+        price:
+          type: number
+          example: 1200.00
+        price_old:
+          type: number
+          nullable: true
+        stock_qty:
+          type: integer
+        is_active:
+          type: boolean
+        is_featured:
+          type: boolean
+        cover_image:
+          $ref: '#/components/schemas/ProductImage'
+          nullable: true
+        category:
+          $ref: '#/components/schemas/Category'
+        created_at:
+          type: string
+          format: date-time
+
+    ProductDetail:
+      allOf:
+        - $ref: '#/components/schemas/ProductSummary'
+        - type: object
+          properties:
+            description:
+              type: string
+              nullable: true
+            sku:
+              type: string
+              nullable: true
+            weight_grams:
+              type: number
+              nullable: true
+            is_custom:
+              type: boolean
+            images:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductImage'
+            variants:
+              type: array
+              items:
+                $ref: '#/components/schemas/ProductVariant'
+            materials:
+              type: array
+              items:
+                $ref: '#/components/schemas/Material'
+            symbols:
+              type: array
+              items:
+                $ref: '#/components/schemas/Symbol'
+            updated_at:
+              type: string
+              format: date-time
+
+    ProductCreate:
+      type: object
+      required: [category_id, name, slug, price]
+      properties:
+        category_id:
+          type: string
+          format: uuid
+        name:
+          type: string
+        slug:
+          type: string
+        description:
+          type: string
+        price:
+          type: number
+          minimum: 0
+        price_old:
+          type: number
+          nullable: true
+        stock_qty:
+          type: integer
+          default: 0
+        sku:
+          type: string
+        weight_grams:
+          type: number
+        is_active:
+          type: boolean
+          default: true
+        is_custom:
+          type: boolean
+          default: false
+        is_featured:
+          type: boolean
+          default: false
+        material_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+        symbol_ids:
+          type: array
+          items:
+            type: string
+            format: uuid
+
+    ProductListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/ProductSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ── Cart ──
+    CartItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        product:
+          $ref: '#/components/schemas/ProductSummary'
+        variant:
+          $ref: '#/components/schemas/ProductVariant'
+          nullable: true
+        quantity:
+          type: integer
+        unit_price:
+          type: number
+        subtotal:
+          type: number
+
+    CartResponse:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/CartItem'
+        subtotal:
+          type: number
+        total_items:
+          type: integer
+
+    CartItemCreate:
+      type: object
+      required: [product_id, quantity]
+      properties:
+        product_id:
+          type: string
+          format: uuid
+        variant_id:
+          type: string
+          format: uuid
+          nullable: true
+        quantity:
+          type: integer
+          minimum: 1
+
+    # ── Order ───
+    OrderItem:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+          nullable: true
+        product_name:
+          type: string
+        sku:
+          type: string
+          nullable: true
+        unit_price:
+          type: number
+        quantity:
+          type: integer
+        subtotal:
+          type: number
+        custom_note:
+          type: string
+          nullable: true
+
+    OrderCreate:
+      type: object
+      required: [customer_name, customer_phone, delivery_method, payment_method, items]
+      properties:
+        customer_name:
+          type: string
+        customer_phone:
+          type: string
+        customer_email:
+          type: string
+          format: email
+        delivery_method:
+          type: string
+          enum: [nova_poshta, ukrposhta, pickup]
+        delivery_city:
+          type: string
+        delivery_address:
+          type: string
+        nova_poshta_ref:
+          type: string
+        payment_method:
+          type: string
+          enum: [card, cod, bank_transfer]
+        promo_code:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        items:
+          type: array
+          minItems: 1
+          items:
+            type: object
+            required: [product_id, quantity]
+            properties:
+              product_id:
+                type: string
+                format: uuid
+              variant_id:
+                type: string
+                format: uuid
+                nullable: true
+              quantity:
+                type: integer
+                minimum: 1
+              custom_note:
+                type: string
+
+    OrderSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        status:
+          type: string
+          enum: [new, confirmed, in_production, shipped, delivered, cancelled]
+        customer_name:
+          type: string
+        total_amount:
+          type: number
+        payment_status:
+          type: string
+          enum: [pending, paid, refunded]
+        delivery_method:
+          type: string
+        created_at:
+          type: string
+          format: date-time
+
+    OrderDetail:
+      allOf:
+        - $ref: '#/components/schemas/OrderSummary'
+        - type: object
+          properties:
+            customer_phone:
+              type: string
+            customer_email:
+              type: string
+              nullable: true
+            delivery_city:
+              type: string
+              nullable: true
+            delivery_address:
+              type: string
+              nullable: true
+            nova_poshta_ref:
+              type: string
+              nullable: true
+            subtotal:
+              type: number
+            discount_amount:
+              type: number
+            shipping_cost:
+              type: number
+            notes:
+              type: string
+              nullable: true
+            admin_notes:
+              type: string
+              nullable: true
+            items:
+              type: array
+              items:
+                $ref: '#/components/schemas/OrderItem'
+            updated_at:
+              type: string
+              format: date-time
+
+    OrderListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrderSummary'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ── Custom Request ──
+    CustomRequest:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        customer_name:
+          type: string
+        customer_phone:
+          type: string
+        customer_email:
+          type: string
+          nullable: true
+        description:
+          type: string
+        budget:
+          type: number
+          nullable: true
+        reference_urls:
+          type: array
+          items:
+            type: string
+        status:
+          type: string
+          enum: [new, in_review, quoted, approved, rejected]
+        admin_notes:
+          type: string
+          nullable: true
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    CustomRequestCreate:
+      type: object
+      required: [customer_name, customer_phone, description]
+      properties:
+        customer_name:
+          type: string
+        customer_phone:
+          type: string
+        customer_email:
+          type: string
+          format: email
+        description:
+          type: string
+        budget:
+          type: number
+          nullable: true
+        reference_urls:
+          type: array
+          items:
+            type: string
+            format: uri
+
+    # ── Promo Code ───
+    PromoCode:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        code:
+          type: string
+        discount_type:
+          type: string
+          enum: [percent, fixed]
+        discount_value:
+          type: number
+        min_order_amount:
+          type: number
+        max_uses:
+          type: integer
+          nullable: true
+        used_count:
+          type: integer
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    PromoCodeCreate:
+      type: object
+      required: [code, discount_type, discount_value]
+      properties:
+        code:
+          type: string
+          example: CHRISTMAS10
+        discount_type:
+          type: string
+          enum: [percent, fixed]
+        discount_value:
+          type: number
+          example: 10
+        min_order_amount:
+          type: number
+          default: 0
+        max_uses:
+          type: integer
+          nullable: true
+        expires_at:
+          type: string
+          format: date-time
+          nullable: true
+        is_active:
+          type: boolean
+          default: true
+
+    PromoCodeValidation:
+      type: object
+      properties:
+        valid:
+          type: boolean
+        discount_type:
+          type: string
+          enum: [percent, fixed]
+        discount_value:
+          type: number
+        discount_amount:
+          type: number
+          description: Реальна сума знижки для цього замовлення
+
+    # ── Review ───
+    Review:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        product_id:
+          type: string
+          format: uuid
+        author_name:
+          type: string
+          nullable: true
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+        is_approved:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+
+    ReviewCreate:
+      type: object
+      required: [rating]
+      properties:
+        rating:
+          type: integer
+          minimum: 1
+          maximum: 5
+        comment:
+          type: string
+          nullable: true
+
+    # ── User ───
+    UserProfile:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          nullable: true
+        role:
+          type: string
+          enum: [customer, admin]
+        is_verified:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    UserProfileUpdate:
+      type: object
+      properties:
+        full_name:
+          type: string
+        phone:
+          type: string
+
+    UserAddress:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        label:
+          type: string
+          nullable: true
+          example: Дім
+        city:
+          type: string
+        street:
+          type: string
+        zip_code:
+          type: string
+          nullable: true
+        nova_poshta_ref:
+          type: string
+          nullable: true
+        is_default:
+          type: boolean
+
+    UserAddressCreate:
+      type: object
+      required: [city, street]
+      properties:
+        label:
+          type: string
+        city:
+          type: string
+        street:
+          type: string
+        zip_code:
+          type: string
+        nova_poshta_ref:
+          type: string
+        is_default:
+          type: boolean
+          default: false
+
+    UserListResponse:
+      type: object
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/UserProfile'
+        pagination:
+          $ref: '#/components/schemas/Pagination'
+
+    # ── Admin Stats ────
+    AdminStats:
+      type: object
+      properties:
+        orders:
+          type: object
+          properties:
+            total:
+              type: integer
+            new:
+              type: integer
+            in_production:
+              type: integer
+            revenue_total:
+              type: number
+            revenue_this_month:
+              type: number
+        products:
+          type: object
+          properties:
+            total:
+              type: integer
+            out_of_stock:
+              type: integer
+        users:
+          type: object
+          properties:
+            total:
+              type: integer
+            new_this_month:
+              type: integer
+        custom_requests:
+          type: object
+          properties:
+            total:
+              type: integer
+            pending:
+              type: integer
+        reviews:
+          type: object
+          properties:
+            pending_moderation:
+              type: integer
