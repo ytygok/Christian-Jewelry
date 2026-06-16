@@ -1,0 +1,12 @@
+FROM postgres:16-alpine
+
+LABEL maintainer="Christian Jewelry Team"
+LABEL description="PostgreSQL database for Christian Jewelry Shop"
+
+# Copy init scripts
+COPY init/ /docker-entrypoint-initdb.d/
+
+# Set proper permissions
+RUN chmod 755 /docker-entrypoint-initdb.d/
+
+EXPOSE 5432
