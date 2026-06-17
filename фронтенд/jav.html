@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="uk" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#141318">
+    <title>Christian Jewelry</title>
+    <link rel="stylesheet" href="jav.css">
+</head>
+<body>
+
+<!-- ===== HEADER ===== -->
+<header class="header">
+    <div class="header__inner">
+        <div class="logo" onclick="showPage('home')">Christian Jewelry</div>
+        <nav class="nav">
+            <a href="#" class="nav__link active" onclick="showPage('home');return false;">Головна</a>
+            <a href="#" class="nav__link" onclick="showPage('about');return false;">Про нас</a>
+            <a href="#" class="nav__link" onclick="showPage('contacts');return false;">Контакти</a>
+            <button class="nav__btn" onclick="openOrderModal()">Замовлення</button>
+            <button class="theme-toggle" onclick="toggleTheme()" id="themeBtn" title="Змінити тему" aria-label="Змінити тему">🌙</button>
+            <div id="authArea"></div>
+        </nav>
+    </div>
+</header>
+
+<!-- ===== ADMIN BAR ===== -->
+<div class="admin-bar" id="adminBar" style="display:none;">
+    <span>⚙ Адміністратор</span>
+    <button class="admin-btn" onclick="openAddProductModal()">+ Додати виріб</button>
+    <button class="admin-btn" onclick="openUsersModal()">👤 Облікові записи</button>
+    <button class="admin-btn" onclick="exportDB()">⬇ Експорт БД</button>
+</div>
+
+<!-- ===== PAGE: HOME ===== -->
+<div class="page active" id="page-home">
+    <div class="wrapper">
+        <section class="categories">
+            <div class="categories__row">
+                <div class="category" onclick="showCategory('rings')">
+                    <div class="category__img"><img src="img/кільце.jpg" alt="Каблучки"></div>
+                    <span>Каблучки / Перстні</span>
+                </div>
+                <div class="category" onclick="showCategory('earrings')">
+                    <div class="category__img"><img src="img/сережки.jpg" alt="Сережки"></div>
+                    <span>Сережки</span>
+                </div>
+                <div class="category" onclick="showCategory('pendants')">
+                    <div class="category__img"><img src="img/підвіска.jpg" alt="Підвіски"></div>
+                    <span>Підвіски</span>
+                </div>
+                <div class="category" onclick="showCategory('bracelets')">
+                    <div class="category__img"><img src="img/браслет.jpg" alt="Браслети"></div>
+                    <span>Браслети</span>
+                </div>
+                <div class="category" onclick="showCategory('necklaces')">
+                    <div class="category__img"><img src="img/коль'є.jpg" alt="Коль'є"></div>
+                    <span>Коль'є</span>
+                </div>
+                <div class="category" onclick="showCategory('brooches')">
+                    <div class="category__img" style="background:linear-gradient(135deg,#1e1630,#2a1e40);display:flex;align-items:center;justify-content:center;">
+                        <svg width="64" height="64" viewBox="0 0 70 70" fill="none">
+                            <circle cx="35" cy="35" r="33" stroke="#9070d0" stroke-width="1.5" stroke-dasharray="5 3"/>
+                            <text x="35" y="42" text-anchor="middle" font-family="Poppins,sans-serif" font-size="26" fill="#9070d0">✿</text>
+                        </svg>
+                    </div>
+                    <span>Брошки</span>
+                </div>
+                <div class="category" onclick="showCategory('custom')">
+                    <div class="category__img" style="background:linear-gradient(135deg,#1c1828,#261e38);display:flex;align-items:center;justify-content:center;">
+                        <svg width="64" height="64" viewBox="0 0 70 70" fill="none">
+                            <circle cx="35" cy="35" r="33" stroke="#c8a850" stroke-width="1.5" stroke-dasharray="5 3"/>
+                            <text x="35" y="32" text-anchor="middle" font-family="Poppins,sans-serif" font-size="20" fill="#c8a850">✦</text>
+                            <text x="35" y="50" text-anchor="middle" font-family="Poppins,sans-serif" font-size="8" fill="#c8a850" font-weight="600" letter-spacing="1">YOUR IDEA</text>
+                        </svg>
+                    </div>
+                    <span>Індивідуальне</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="home-catalog">
+            <div class="home-catalog__header">
+                <h2 class="home-catalog__title">Каталог виробів</h2>
+            </div>
+            <div class="home-catalog__grid" id="homeCatalogGrid"></div>
+        </section>
+    </div>
+</div>
+
+<!-- ===== PAGE: CATEGORY ===== -->
+<div class="page" id="page-category">
+    <div class="wrapper" style="min-height:80vh;">
+        <div class="page-header">
+            <h1 id="categoryTitle">Категорія</h1>
+        </div>
+        <div class="products-grid" id="productsGrid"></div>
+    </div>
+</div>
+
+<!-- ===== PAGE: ABOUT ===== -->
+<div class="page" id="page-about">
+    <div class="wrapper">
+        <div class="static-page">
+            <h1>Про нас</h1>
+            <p>
+                Christian Jewelry — це авторська ювелірна майстерня, що створює вироби з душею та змістом.
+                Кожен виріб несе в собі символіку та естетику, що поєднує духовність і сучасний стиль.
+                Ми працюємо з сріблом, золотом і натуральними каменями, втілюючи унікальні ідеї в метал.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== PAGE: CONTACTS ===== -->
+<div class="page" id="page-contacts">
+    <div class="wrapper">
+        <div class="static-page" style="max-width:600px;">
+            <h1>Контакти</h1>
+            <p>
+                📞 Телефон: +38 (0XX) XXX-XX-XX<br><br>
+                📧 Email: info@christianjewelry.ua<br><br>
+                📍 Київ, Україна
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: AUTH ===== -->
+<div class="modal-overlay" id="authModal">
+    <div class="modal">
+        <button class="modal__close" onclick="closeModal('authModal')">✕</button>
+        <h2 id="authTitle">Увійти</h2>
+        <p id="authSubtitle">Введіть свої дані для входу</p>
+        <div class="form-tabs">
+            <div class="form-tab active" id="tabLogin" onclick="switchTab('login')">Вхід</div>
+            <div class="form-tab" id="tabRegister" onclick="switchTab('register')">Реєстрація</div>
+        </div>
+        <div id="loginForm">
+            <div class="form-group"><label>Електронна пошта</label><input type="email" id="loginEmail" placeholder="your@email.com"></div>
+            <div class="form-group"><label>Пароль</label><input type="password" id="loginPassword" placeholder="••••••••"></div>
+            <button class="form-submit" onclick="doLogin()">Увійти</button>
+            <div class="form-error" id="loginError">Невірний email або пароль</div>
+        </div>
+        <div id="registerForm" style="display:none;">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div class="form-group"><label>Ім'я</label><input type="text" id="regName" placeholder="Ім'я"></div>
+                <div class="form-group"><label>Прізвище</label><input type="text" id="regSurname" placeholder="Прізвище"></div>
+            </div>
+            <div class="form-group"><label>Номер телефону</label><input type="tel" id="regPhone" placeholder="+38 (0XX) XXX-XX-XX"></div>
+            <div class="form-group"><label>Електронна пошта</label><input type="email" id="regEmail" placeholder="your@email.com"></div>
+            <div class="form-group"><label>Пароль</label><input type="password" id="regPassword" placeholder="Мінімум 6 символів"></div>
+            <button class="form-submit" onclick="doRegister()">Зареєструватись</button>
+            <div class="form-error" id="registerError"></div>
+            <div class="form-success" id="registerSuccess">✓ Реєстрацію успішно завершено!</div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== MODAL: ORDER ===== -->
+<div class="modal-overlay" id="orderModal">
+    <div class="modal order-modal">
+        <button class="modal__close" onclick="closeModal('orderModal')">✕</button>
+        <h2>Оформити замовлення</h2>
+        <p>Заповніть деталі вашого виробу</p>
+        <div class="form-group">
+            <label>Виріб</label>
+            <select id="orderProduct">
+                <option value="">— Оберіть тип виробу —</option>
+                <option>Каблучка / Перстень</option><option>Сережки</option>
+                <option>Підвіска</option><option>Браслет</option>
+                <option>Коль'є</option><option>Брошка</option>
+                <option>Індивідуальне замовлення</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Матеріал</label>
+            <select id="orderMaterial">
+                <option value="">— Оберіть матеріал —</option>
+                <option>Срібло 925</option><option>Золото 585</option>
+                <option>Золото 750</option><option>Позолочене срібло</option><option>Біле золото</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Стиль</label>
+            <select id="orderStyle">
+                <option value="">— Оберіть стиль —</option>
+                <option>Класичний</option><option>Мінімалістичний</option>
+                <option>Вінтажний</option><option>Релігійний / Духовний</option><option>Авторський</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Додаткові матеріали / камені</label>
+            <input type="text" id="orderExtras" placeholder="Наприклад: діамант, смарагд, гравіювання...">
+        </div>
+        <div class="form-group"><label>Нотатки / побажання</label>
+            <textarea id="orderNotes" placeholder="Опишіть деталі замовлення, розміри, побажання..."></textarea>
+        </div>
+        <div class="form-group">
+            <label>Фото-зразок</label>
+            <div class="file-upload">
+                <input type="file" id="orderFiles" accept="image/*" multiple onchange="previewFiles(this)">
+                <div class="file-upload-label">📎 Натисніть або перетягніть фото-зразки сюди</div>
+                <div class="file-preview" id="orderFilesPreview"></div>
+            </div>
+        </div>
+        <button class="form-submit" onclick="submitOrder()">✦ Здійснити замовлення</button>
+        <div class="form-success" id="orderSuccess">✓ Ваше замовлення прийнято! Ми зв'яжемось з вами найближчим часом.</div>
+    </div>
+</div>
+
+<!-- ===== MODAL: ADD/EDIT PRODUCT (ADMIN) ===== -->
+<div class="modal-overlay" id="addProductModal">
+    <div class="modal" style="max-width:580px;">
+        <button class="modal__close" onclick="closeModal('addProductModal')">✕</button>
+        <h2 id="addProductTitle">Додати виріб</h2>
+        <p>Заповніть інформацію про виріб</p>
+        <input type="hidden" id="editProductId">
+        <div class="form-group">
+            <label>Категорія</label>
+            <select id="addCat">
+                <option value="rings">Каблучки / Перстні</option>
+                <option value="earrings">Сережки</option>
+                <option value="pendants">Підвіски</option>
+                <option value="bracelets">Браслети</option>
+                <option value="necklaces">Коль'є</option>
+                <option value="brooches">Брошки</option>
+                <option value="custom">Індивідуальне</option>
+            </select>
+        </div>
+        <div class="form-group"><label>Назва виробу</label>
+            <input type="text" id="addName" placeholder="Наприклад: Хрест «Солус Христус»">
+        </div>
+        <div class="form-group"><label>Опис</label>
+            <textarea id="addDesc" placeholder="Короткий опис виробу..."></textarea>
+        </div>
+        <div class="form-group"><label>Матеріал</label>
+            <input type="text" id="addMaterial" placeholder="Срібло 925, Золото 585...">
+        </div>
+        <div class="form-group"><label>Ціна (грн)</label>
+            <input type="number" id="addPrice" placeholder="0">
+        </div>
+        <div class="form-group">
+            <label>Фото та відео виробу</label>
+            <div class="media-upload-zone" id="mediaUploadZone" onclick="document.getElementById('mediaFileInput').click()">
+                <input type="file" id="mediaFileInput" accept="image/*,video/*" multiple style="display:none" onchange="handleMediaFiles(this)">
+                <div class="media-upload-hint">
+                    <span style="font-size:24px;">📎</span>
+                    <p>Натисніть щоб обрати фото або відео</p>
+                    <p style="font-size:11px;opacity:.5;">JPG, PNG, WebP, MP4, MOV — можна кілька одразу</p>
+                </div>
+            </div>
+            <div style="margin-top:8px;display:flex;gap:8px;">
+                <input type="text" id="addMediaUrl" placeholder="Або вставте URL фото/відео..." class="media-url-input">
+                <button type="button" onclick="addMediaUrl()" class="media-url-btn">+ Додати</button>
+            </div>
+            <div class="media-preview-list" id="mediaPreviewList"></div>
+        </div>
+        <button class="form-submit" id="saveProductBtn" onclick="adminSaveProduct()">+ Зберегти виріб</button>
+    </div>
+</div>
+
+<!-- ===== MODAL: USERS (ADMIN) ===== -->
+<div class="modal-overlay" id="usersModal">
+    <div class="modal wide">
+        <button class="modal__close" onclick="closeModal('usersModal')">✕</button>
+        <h2>Облікові записи</h2>
+        <p>Зареєстровані користувачі та замовлення</p>
+        <div id="usersTableWrap"></div>
+    </div>
+</div>
+
+<!-- ===== MODAL: LIGHTBOX ===== -->
+<div class="modal-overlay" id="lightboxModal" style="background:rgba(4,3,14,0.95);padding:0;">
+    <div class="lightbox">
+        <button class="lightbox__close" onclick="closeLightbox()">✕</button>
+        <button class="lightbox__nav lightbox__nav--prev" onclick="lightboxNav(-1)">&#8249;</button>
+        <div class="lightbox__media" id="lightboxMedia"></div>
+        <button class="lightbox__nav lightbox__nav--next" onclick="lightboxNav(1)">&#8250;</button>
+        <div class="lightbox__counter" id="lightboxCounter"></div>
+        <div class="lightbox__thumbs" id="lightboxThumbs"></div>
+    </div>
+</div>
+
+<!-- ===== FOOTER ===== -->
+<footer class="footer">
+    <div class="footer__inner">
+        <div class="footer__brand">
+            <div class="footer__logo">Christian Jewelry</div>
+            <p class="footer__tagline">Вироби з душею та змістом</p>
+        </div>
+        <div class="footer__social">
+            <p class="footer__label">Ми в соціальних мережах</p>
+            <div class="footer__links">
+                <a href="https://www.instagram.com/" target="_blank" class="footer__social-btn footer__social-btn--ig">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+                    Instagram
+                </a>
+                <a href="https://www.tiktok.com/" target="_blank" class="footer__social-btn footer__social-btn--tt">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><path d="M19.59 6.69a4.83 4.83 0 01-3.77-4.25V2h-3.45v13.67a2.89 2.89 0 01-2.88 2.5 2.89 2.89 0 01-2.89-2.89 2.89 2.89 0 012.89-2.89c.28 0 .54.04.79.1V9.01a6.33 6.33 0 00-.79-.05 6.34 6.34 0 00-6.34 6.34 6.34 6.34 0 006.34 6.34 6.34 6.34 0 006.33-6.34V8.69a8.18 8.18 0 004.78 1.52V6.75a4.85 4.85 0 01-1.01-.06z"/></svg>
+                    TikTok
+                </a>
+            </div>
+        </div>
+        <div class="footer__army">
+            <p class="footer__label">🇺🇦 Підтримати захисників</p>
+            <p class="footer__army-text">Частина коштів від замовлень спрямовується на підтримку ЗСУ</p>
+            <div class="footer__army-btns">
+                <a href="https://savelife.in.ua/donate/" target="_blank" class="footer__army-btn">Повернись живим</a>
+                <a href="https://prytula.org/donate" target="_blank" class="footer__army-btn footer__army-btn--alt">Фонд Притули</a>
+            </div>
+        </div>
+    </div>
+    <div class="footer__bottom">
+        <span>© 2026 Christian Jewelry. Всі права захищені.</span>
+        <span>Зроблено з ❤️ в Україні</span>
+    </div>
+</footer>
+
+<div class="notif" id="notif"></div>
+<script src="jav.js"></script>
+</body>
+</html>
