@@ -115,6 +115,9 @@ Christian-Jewelry/
 docker-compose down -v
 docker-compose up -d
 
+# Підключити сайт (фронтенд) до бази данних
+dotnet run --project Cristianjewelry.csproj
+
 # Підключитись до БД
 docker exec -it christian_jewelry_db psql -U cj_user -d christian_jewelry
 
