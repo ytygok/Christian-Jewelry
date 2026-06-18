@@ -1,4 +1,4 @@
-using System.Text;
+﻿using System.Text;
 using ChristianJewelry.Domain.Interfaces;
 using ChristianJewelry.Infrastructure.Persistence;
 using ChristianJewelry.Infrastructure.Persistence.Repositories;
@@ -9,6 +9,15 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("AllowAll", policy =>
+    {
+        policy.AllowAnyOrigin()
+              .AllowAnyMethod()
+              .AllowAnyHeader();
+    });
+});
 
 // ── Database
 var connectionString = builder.Configuration.GetConnectionString("Default")
@@ -146,6 +155,7 @@ if (app.Environment.IsDevelopment() || app.Environment.IsProduction())
 
 app.UseSession();
 app.UseAuthentication();
+app.UseCors("AllowAll");
 app.UseAuthorization();
 
 // ── Health check 
