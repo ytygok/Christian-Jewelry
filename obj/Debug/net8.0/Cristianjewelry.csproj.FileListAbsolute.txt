@@ -1,0 +1,9 @@
+C:\Users\darya\OneDrive\Рабочий стол\Christian-Jewelry\obj\Debug\net8.0\Cristianjewelry.csproj.AssemblyReference.cache
+C:\Users\darya\OneDrive\Рабочий стол\Christian-Jewelry\obj\Debug\net8.0\rpswa.dswa.cache.json
+C:\Users\darya\OneDrive\Рабочий стол\Christian-Jewelry\obj\Debug\net8.0\Cristianjewelry.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\darya\OneDrive\Рабочий стол\Christian-Jewelry\obj\Debug\net8.0\Cristianjewelry.AssemblyInfoInputs.cache
+C:\Users\darya\OneDrive\Рабочий стол\Christian-Jewelry\obj\Debug\net8.0\Cristianjewelry.AssemblyInfo.cs
+C:\Users\darya\OneDrive\Рабочий стол\Christian-Jewelry\obj\Debug\net8.0\Cristianjewelry.csproj.CoreCompileInputs.cache
+C:\Users\darya\OneDrive\Рабочий стол\Christian-Jewelry\obj\Debug\net8.0\ChristianJewelry.MvcApplicationPartsAssemblyInfo.cs
+C:\Users\darya\OneDrive\Рабочий стол\Christian-Jewelry\obj\Debug\net8.0\ChristianJewelry.MvcApplicationPartsAssemblyInfo.cache
+C:\Users\darya\OneDrive\Рабочий стол\Christian-Jewelry\obj\Debug\net8.0\Cristianjewelry.sourcelink.json

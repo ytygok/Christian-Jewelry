@@ -4,8 +4,8 @@
 //  USE_SERVER = true   →  REST API на localhost:3000
 // ============================================================
 
-const USE_SERVER = false;          // ← змін на true коли запустиш server/server.js
-const API_URL    = 'http://localhost:3000/api';
+const USE_SERVER = true;          // ← змін на true коли запустиш server/server.js
+const API_URL    = 'http://localhost:5000/api';
 
 // ════════════════════════════════════════════════════════════
 //  DB LAYER — автоматично перемикається між localStorage і API

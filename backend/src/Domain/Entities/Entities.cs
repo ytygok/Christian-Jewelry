@@ -243,7 +243,8 @@ public class Review : BaseEntity
     public User? User { get; set; }
 }
 
-// CustomRequest public class CustomRequest : AuditableEntity
+// CustomRequest public
+class CustomRequest : AuditableEntity
 {
     public Guid? UserId { get; set; }
     public string CustomerName { get; set; } = string.Empty;
@@ -260,7 +261,8 @@ public class Review : BaseEntity
     public ICollection<CustomRequestFile> Files { get; set; } = new List<CustomRequestFile>();
 }
 
-// CustomRequestFile public class CustomRequestFile : BaseEntity
+// CustomRequestFile public
+class CustomRequestFile : BaseEntity
 {
     public Guid RequestId { get; set; }
     public string Url { get; set; } = string.Empty;
