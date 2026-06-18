@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 //  CHRISTIAN JEWELRY — Main JS  v4
 //  USE_SERVER = false  →  localStorage (без сервера)
 //  USE_SERVER = true   →  REST API на localhost:3000

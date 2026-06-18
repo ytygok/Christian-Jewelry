@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("ChristianJewelry")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3a302ac37c1d268476bcbf02007af4fe529d2fbe")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+fe00c325ad8b73b8b93ba360d75758b326945668")]
 [assembly: System.Reflection.AssemblyProductAttribute("ChristianJewelry")]
 [assembly: System.Reflection.AssemblyTitleAttribute("ChristianJewelry")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]
