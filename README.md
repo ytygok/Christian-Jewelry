@@ -60,8 +60,8 @@ dotnet run --project Cristianjewelry.csproj
 ### 6. Відкрити сайт
 | Сервіс | URL |
 |---|---|
-| Сайт | http://localhost:5000 |
-| Swagger API | http://localhost:5000/swagger |
+| Сайт | http://localhost:5000/#home |
+| Swagger API | http://localhost:5000/swagger/index.html#/ |
 | PostgreSQL | localhost:5432 |
 
 ## Структура проєкту
